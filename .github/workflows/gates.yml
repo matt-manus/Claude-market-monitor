@@ -1,0 +1,45 @@
+name: Trading gates (separate from the monitor page)
+
+# Writes data/gates/ only. Does not touch the monitor page, docs/ or data/monitor/.
+# Runs after the monitor's second daily build:
+#   02:07 UTC Tue–Sat = 10:07 HKT
+# Also runs when this workflow or scripts/gates/ change, and on demand.
+on:
+  schedule:
+    - cron: '7 2 * * 2-6'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/gates/**'
+      - '.github/workflows/gates.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: gates
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: pip install "yfinance>=0.2.40" pandas numpy requests lxml
+      - name: Gates
+        run: python scripts/gates/gates.py
+      - name: Commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/gates
+          if git diff --staged --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Gates update $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && break; sleep 10; done
