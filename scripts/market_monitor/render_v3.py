@@ -443,13 +443,23 @@ def sec4b(ctx):
              "月升 50%", "月跌 50%", "34 日升 13%", "34 日跌 13%", "股票總數", "T2108", "S&amp;P"]
     cols = sb["columns"]
     heads = [short[i] if i < len(short) else R.esc(c[:14]) for i, c in enumerate(cols)]
-    rows = sb["rows"][:15]
-    tr = "".join("<tr>" + "".join(f"<td>{R.esc(v)}</td>" for v in r) + "</tr>" for r in rows)
+    col = sb.get("coloured")
+    if col and len(col[0]) >= len(cols) - 1:
+        def td(c):
+            txt, bg, fg = c
+            st = ""
+            if bg and bg.lower() not in ("#ffffff", "#fff"):
+                st = f' style="background:{bg};color:{fg or "#000"};font-weight:600"'
+            return f"<td{st}>{R.esc(txt)}</td>"
+        tr = "".join("<tr>" + "".join(td(c) for c in r[:len(cols)]) + "</tr>" for r in col[:15])
+    else:
+        rows = sb["rows"][:15]
+        tr = "".join("<tr>" + "".join(f"<td>{R.esc(v)}</td>" for v in r) + "</tr>" for r in rows)
     return ('<div class="sub-title" style="margin-top:20px">4B — Stockbee Market Monitor</div>'
             '<div class="mm-wrap"><table class="mm-t" style="font-size:11px"><tr>' + "".join(f"<th>{h}</th>" for h in heads) + "</tr>"
             + tr + '</table></div>'
             f'<p class="mm-note">直接讀 Stockbee 公開 Google Sheet（<a href="{sb["src"]}" style="color:#888">連結</a>），最近 15 行。'
-            'Stockbee 用佢自己嘅股票範圍，所以 Up/Down 4% 同 4C 嘅數唔同係正常。欄名係簡寫：季 = 一季、月 = 一個月。</p>')
+            '顏色照搬 Stockbee sheet 自己嘅標色。Stockbee 用佢自己嘅股票範圍，所以 Up/Down 4% 同 4C 嘅數唔同係正常。欄名係簡寫：季 = 一季、月 = 一個月。</p>')
 
 
 # ---------------------------------------------------------------- 5 / 6

@@ -137,6 +137,57 @@ def indices(asof, members, close):
     return out
 
 
+def _sheet_gid_for_year(year):
+    """Find the gid of the tab named like the current year (e.g. '2026') on the published sheet."""
+    t = requests.get(f"https://docs.google.com/spreadsheets/d/{STOCKBEE_SHEET}/pubhtml", headers=UA, timeout=30).text
+    t = t.replace('\\"', '"')
+    for name, gid in re.findall(r'name:\s*"([^"]+)"[^}]*?gid:\s*"(\d+)"', t):
+        if name.strip() == str(year):
+            return gid
+    for gid, name in re.findall(r'id="sheet-button-(\d+)".*?>([^<]+)</a>', t, re.S):
+        if name.strip() == str(year):
+            return gid
+    # fall back: try each gid and take the first whose first data row is in `year`
+    for gid in dict.fromkeys(re.findall(r"gid=(\d+)", t)):
+        x = requests.get(f"https://docs.google.com/spreadsheets/d/{STOCKBEE_SHEET}/htmlview/sheet?headers=false&gid={gid}",
+                         headers=UA, timeout=30).text
+        m = re.search(r">(\d{1,2}/\d{1,2}/(20\d\d))<", x)
+        if m and m.group(2) == str(year):
+            return gid
+    return None
+
+
+def stockbee_coloured(year, nrows=25):
+    gid = _sheet_gid_for_year(year)
+    if gid is None:
+        raise ValueError(f"no {year} tab found")
+    x = requests.get(f"https://docs.google.com/spreadsheets/d/{STOCKBEE_SHEET}/htmlview/sheet?headers=false&gid={gid}",
+                     headers=UA, timeout=30).text
+    style = {}
+    for k, v in re.findall(r"\.s(\d+)\{([^}]*)\}", x):
+        bg = re.search(r"background-color:\s*(#[0-9a-fA-F]{3,6})", v)
+        fg = re.search(r"(?<!background-)color:\s*(#[0-9a-fA-F]{3,6})", v)
+        style[k] = (bg.group(1) if bg else None, fg.group(1) if fg else None)
+    rows = []
+    for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", x, re.S):
+        cells = []
+        for attrs, inner in re.findall(r"<td([^>]*)>(.*?)</td>", tr, re.S):
+            c = re.search(r'class="s(\d+)"', attrs)
+            bg, fg = style.get(c.group(1), (None, None)) if c else (None, None)
+            txt = re.sub(r"<[^>]+>", "", inner).replace("&amp;", "&").replace("&nbsp;", " ").strip()
+            cells.append([txt, bg, fg])
+        cells = [c for c in cells]
+        if cells and re.match(r"^\d{1,2}/\d{1,2}/\d{4}$", cells[0][0] or ""):
+            rows.append(cells)
+        elif cells and len(cells) > 1 and re.match(r"^\d{1,2}/\d{1,2}/\d{4}$", cells[1][0] or ""):
+            rows.append(cells[1:])
+        if len(rows) >= nrows:
+            break
+    if not rows:
+        raise ValueError("no dated rows parsed")
+    return {"rows": rows, "gid": gid, "src": f"https://docs.google.com/spreadsheets/d/{STOCKBEE_SHEET}/pubhtml"}
+
+
 def stockbee(nrows=25):
     url = f"https://docs.google.com/spreadsheets/d/{STOCKBEE_SHEET}/gviz/tq?tqx=out:csv"
     txt = requests.get(url, headers=UA, timeout=30).text
@@ -145,7 +196,15 @@ def stockbee(nrows=25):
     df = df[df.iloc[:, 0].fillna("").str.match(r"^\d{1,2}/\d{1,2}/\d{4}$")]
     cols = [re.sub(r"\s+", " ", str(c)).strip() for c in df.columns]
     rows = df.head(nrows).fillna("").values.tolist()
-    return {"columns": cols, "rows": rows, "src": f"https://docs.google.com/spreadsheets/d/{STOCKBEE_SHEET}"}
+    out = {"columns": cols, "rows": rows, "src": f"https://docs.google.com/spreadsheets/d/{STOCKBEE_SHEET}"}
+    try:
+        yr = rows[0][0].split("/")[-1] if rows else str(pd.Timestamp.utcnow().year)
+        col = stockbee_coloured(yr, nrows)
+        out["coloured"] = col["rows"]
+        out["gid"] = col["gid"]
+    except Exception as e:  # noqa: BLE001
+        out["coloured_error"] = repr(e)[:200]
+    return out
 
 
 def run(asof, close, members, out_dir, log):
