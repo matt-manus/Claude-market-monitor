@@ -1,0 +1,43 @@
+name: Daily market monitor
+
+# Runs after the US close, twice each HK morning (Tue–Sat HKT):
+#   22:37 UTC Mon–Fri  = 06:37 HKT   (first build)
+#   01:37 UTC Tue–Sat  = 09:37 HKT   (rebuild once Yahoo data is complete)
+# GitHub can start scheduled runs late.
+on:
+  schedule:
+    - cron: '37 22 * * 1-5'
+    - cron: '37 1 * * 2-6'
+  workflow_dispatch:
+
+concurrency:
+  group: daily
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: pip install "yfinance>=0.2.40" pandas numpy requests lxml openpyxl
+      - name: Engine
+        run: python scripts/market_monitor/engine.py
+      - name: Render
+        run: python scripts/market_monitor/render_v3.py
+      - name: Commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs data/monitor
+          if git diff --staged --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Daily update $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && break; sleep 10; done
