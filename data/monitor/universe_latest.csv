@@ -39,7 +39,7 @@ ACCS,3.5,12100.0,42350.0,5.42,-35.4244,True,False,False,False,Professional Servi
 ACCV,9.52,656400.0,6248928.3005,,,True,True,False,False,Industrial Machinery/Components
 ACDC,3.1,2377800.0,7371179.7732,5.26,-41.0646,True,False,False,False,Oilfield Services/Equipment
 ACEL,13.66,307300.0,4197717.9531,11.7,16.7521,True,True,False,False,Services-Misc. Amusement & Recreation
-ACET,2.21,278900.0,616369.0106,9.01,-75.4717,True,False,False,False,Biotechnology: Pharmaceutical Preparations
+ACET,,,,,,False,False,False,False,Biotechnology: Pharmaceutical Preparations
 ACFN,13.9,46600.0,647739.9822,20.65,-32.6877,True,False,False,False,Military/Government/Technical
 ACGC,10.15,165000.0,1674749.9371,10.01,1.3986,True,False,False,False,Blank Checks
 ACGL,110.29,1726900.0,190459802.581,98.76,11.6748,True,True,True,False,Property-Casualty Insurers
@@ -193,7 +193,7 @@ ALMU,5.15,490700.0,2527105.0468,13.92,-63.0029,True,True,False,False,Semiconduct
 ALNT,74.26,149100.0,11072166.3185,95.69,-22.3952,True,False,False,False,Electrical Products
 ALNY,164.73,3115300.0,513183355.69,236.56,-30.3644,True,True,True,False,Biotechnology: Pharmaceutical Preparations
 ALOV,10.13,0.0,0.0,9.99,1.4014,True,False,False,False,Unclassified
-ALOY,,,,,,False,False,False,False,Metal Mining
+ALOY,3.87,1865800.0,7220645.7865,11.42,-66.1121,True,False,False,False,Metal Mining
 ALP,2.575,8100.0,20857.5004,8.8,-70.7386,True,False,False,False,Finance: Consumer Services
 ALPX,10.01,100.0,1001.0,9.92,0.9073,True,False,False,False,Blank Checks
 ALRM,66.07,375600.0,24815891.8854,57.6,14.7049,True,True,True,False,Computer Software: Prepackaged Software
