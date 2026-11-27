@@ -533,7 +533,8 @@ def main():
     page = head + '<div class="page-wrap">\n' + body + "\n</div>\n</body>\n</html>\n"
     page = re.sub(r"<title>.*?</title>", f"<title>Market Monitor — {asof}</title>", page, count=1, flags=re.S)
     os.makedirs(ARCH, exist_ok=True)
-    for path in (OUT3, os.path.join(ARCH, f"{asof}.html")):
+    # Pages may publish from the repo root or from /docs: write both
+    for path in (OUT3, os.path.join(R.ROOT, "index.html"), os.path.join(ARCH, f"{asof}.html")):
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(page)
     print(f"Wrote {OUT3} + archive/{asof}.html ({len(page)/1024:.0f} KB)")

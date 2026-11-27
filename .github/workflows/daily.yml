@@ -37,7 +37,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs data/monitor
+          git add index.html docs data/monitor
           if git diff --staged --quiet; then echo "No changes"; exit 0; fi
           git commit -m "Daily update $(date -u +%Y-%m-%dT%H:%MZ)"
           for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && break; sleep 10; done
