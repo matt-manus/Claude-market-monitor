@@ -33,6 +33,30 @@ SECTORS = [("XLK", "科技"), ("XLF", "金融"), ("XLV", "醫療"), ("XLY", "非
 C20, C50, C200 = "#42a5f5", "#ff9800", "#ce93d8"
 
 
+V3_CSS = """
+<style>
+.page-wrap>.section{background:#101010;border:1px solid #262626;border-radius:10px;padding:14px 16px 10px;margin-bottom:22px}
+.page-wrap>.section>.section-title{font-size:12px;color:#cfcfcf;border-left:3px solid var(--amber);margin-bottom:12px}
+.mm-wrap{background:#181818;border:1px solid #2a2a2a;border-radius:6px}
+.mm-card{background:#1c1c1c;border-color:#2e2e2e}
+.mm-box{background:#181818}
+.mom-chart{background:#181818;border-color:#2a2a2a}
+.mm-t th{background:#222;color:#bbb}
+.mm-t tr:nth-child(even) td{background-color:rgba(255,255,255,.025)}
+.mm-t tr:hover td{background-color:rgba(255,255,255,.07)}
+.mm-t td.tp{background:rgba(76,175,80,.16)}
+.mm-t td.tn{background:rgba(244,67,54,.16)}
+.sub-title{color:#bdbdbd;font-size:11px}
+</style>
+"""
+
+
+def tcls(x):
+    if x is None or x != x:
+        return ""
+    return "tp" if x > 0 else ("tn" if x < 0 else "")
+
+
 # ---------------------------------------------------------------- charts
 def line_chart(series, w=340, hgt=150, ymin=0, ymax=100, colors=(), labels=(), title=""):
     """series: list of pd.Series sharing an index."""
@@ -398,8 +422,9 @@ def sec3(ctx):
             continue
         ad = r.get("ad")
         ad_s = (f'{ad["up"] / ad["down"]:.2f}（{ad["up"]}↑/{ad["down"]}↓）' if ad and ad["down"] else "—")
-        tr.append(f'<tr><td style="text-align:left"><b>{s}</b> {nm}</td><td>{r["close"]:,.2f}</td><td>{_pct(r["chg"])}</td>'
-                  f'<td>{R.f(r["rsi"],1)}</td><td>{_pct(r["vs20"])}</td><td>{_pct(r["vs50"])}</td><td>{_pct(r["vs200"])}</td><td>{ad_s}</td></tr>')
+        tr.append(f'<tr><td style="text-align:left"><b>{s}</b> {nm}</td><td>{r["close"]:,.2f}</td><td class="{tcls(r["chg"])}">{_pct(r["chg"])}</td>'
+                  f'<td>{R.f(r["rsi"],1)}</td><td class="{tcls(r["vs20"])}">{_pct(r["vs20"])}</td><td class="{tcls(r["vs50"])}">{_pct(r["vs50"])}</td>'
+                  f'<td class="{tcls(r["vs200"])}">{_pct(r["vs200"])}</td><td>{ad_s}</td></tr>')
     p = ix.get("participation") or {}
     c = p.get("chg") or {}
     part = (f'<div class="mm-box">參與度（1 日）：SPY {_pct(c.get("SPY"))} · RSP 等權重 {_pct(c.get("RSP"))} · IWM {_pct(c.get("IWM"))} · '
@@ -442,7 +467,7 @@ def sec5(latest):
     df = df.sort_values("rank")
     tr = "".join(
         f'<tr><td>{r.rank}</td><td style="text-align:left"><b>{r.etf}</b> {R.esc(r.name)}</td>'
-        f'<td>{R.f(r.ex5,1,True)}</td><td>{R.f(r.ex21,1,True)}</td><td>{R.f(r.ex63,1,True)}</td>'
+        f'<td class="{tcls(r.ex5)}">{R.f(r.ex5,1,True)}</td><td class="{tcls(r.ex21)}">{R.f(r.ex21,1,True)}</td><td class="{tcls(r.ex63)}">{R.f(r.ex63,1,True)}</td>'
         f'<td style="text-align:center">{"✓" if r.above50 else "✗"}</td><td>{(V2._arrow(-r.rank, -r.rank_then) + " " + str(int(r.rank_then)) + " → " + str(r.rank)) if r.rank_then == r.rank_then and r.rank_then is not None else "—"}</td></tr>'
         for r in df.itertuples())
     return ('<p class="mm-note">每隻 sector ETF 嘅回報減 SPY 同期回報（百分點，含股息）。正數 = 跑贏 SPY。'
@@ -509,7 +534,7 @@ def main():
     s6 = (level + '<div class="sub-title" style="margin-top:18px">方向：21 日內變強同變弱</div>' + direction
           + leaders_box(latest) + R.group_map_box(latest.get("sectors")))
 
-    body = (R.CSS
+    body = (R.CSS + V3_CSS
             + (V2.sec(1, "Macro indicators", sec1(ctx), "v3-s1") if ctx.get("macro") else V2.grok_section(live, "s1-macro", 1, "Macro indicators"))
             + (V2.sec(2, "Market sentiment", sec2(ctx), "v3-s2") if ctx.get("fear_greed") or ctx.get("cboe") else V2.grok_section(live, "s2-sentiment", 2, "Market sentiment"))
             + (V2.sec(3, "Major indices", sec3(ctx), "v3-s3") if ctx.get("indices") else V2.grok_section(live, "s3-indices", 3, "Major indices"))
