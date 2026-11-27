@@ -1,0 +1,43 @@
+{
+ "run_utc": "2026-11-27 10:37",
+ "session": "2026-11-25",
+ "gate1": {
+  "closed": false,
+  "ratio_pct": 2.3124,
+  "new_high": 73,
+  "new_low": 20,
+  "universe": 2292,
+  "closed_since": null
+ },
+ "gate4": {
+  "closed": false,
+  "spy": 716.7,
+  "spy_sma200": 733.1607,
+  "iwm": 268.87,
+  "iwm_sma200": 279.5894
+ },
+ "rules": {
+  "gate1": "(new highs - new lows) / universe < -2.0% -> closed. New high/low = close is the highest/lowest close of the last 252 sessions (closing prices). Universe = close >= $5, volume >= 300,000 that day, with 252 sessions of history.",
+  "gate4": "SPY close > 200-day SMA and IWM close < 200-day SMA -> closed (mean-reversion setups only).",
+  "gate2": "not built: parameters not decided",
+  "gate3": "from the Trade Journal, not this script"
+ },
+ "universe_info": {
+  "screener_ok": true,
+  "symdir_ok": true,
+  "candidates": 4482
+ },
+ "no_data_tickers": 0,
+ "log": [
+  "[10:40:57Z] Bars: 4482 tickers x 522 days; no data for 0",
+  "[10:37:23Z] NASDAQ screener rows: 7374",
+  "[10:37:24Z] NASDAQ Trader symbol directory rows: 13310",
+  "[10:37:24Z] Kept by screener name but flagged by symbol-directory name: 25 ARCC=Ares Capital Corporation Common Stock; BANX=ArrowMark Financial Corp. Common Stock; BCIC=BCP Investment Corporation Common Stock; CGBD=Carlyle Secured Lending Inc. Common Stock; CPZ=Calamos Long/Short Equity & Dynamic Income Trust Common Stock; CSQ=Calamos Strategic Total Return Common Stock; DXR=Daxor Corporation Common Stock; FCNCP=First Citizens BancShares Inc. Depositary Shares; FDUS=Fidus Investment Corporation Common Stock; FRMEP=First Merchants Corporation Depository Shares; FUND=Sprott Focus Trust Inc. Common Stock; GBDC=Golub Capital BDC Inc. Common Stock; GECC=Great Elm Capital Corp. Common Stock; GLAD=Gladstone Capital Corporation Common Stock; IEP=Icahn Enterprises L.P. Common Stock; MFIC=MidCap Financial Investment Corporation Common Stock; NSLR=Neostellar Capital Corp. Common Stock; OCSL=Oaktree Specialty Lending Corporation Common Stock; OFS=OFS Capital Corporation Common Stock; OXLC=Oxford Lane Capital Corp. Common Stock; RAND=Rand Capital Corporation Common Stock; SLRC=SLR Investment Corp. Common Stock; TBLD=Thornburg Income Builder Opportunities Trust Common Stock; TCPC=BlackRock TCP Capital Corp. Common Stock; WHF=WhiteHorse Finance Inc. Common Stock",
+  "[10:37:24Z] Candidate tickers after filters: 4482",
+  "[10:37:31Z] downloaded 200/4482",
+  "[10:38:18Z] downloaded 1200/4482",
+  "[10:39:06Z] downloaded 2200/4482",
+  "[10:39:53Z] downloaded 3200/4482",
+  "[10:40:40Z] downloaded 4200/4482"
+ ]
+}
