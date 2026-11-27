@@ -1,12 +1,13 @@
 name: Trading gates (separate from the monitor page)
 
 # Writes data/gates/ only. Does not touch the monitor page, docs/ or data/monitor/.
-# Runs after the monitor's second daily build:
-#   02:07 UTC Tue–Sat = 10:07 HKT
-# Also runs when this workflow or scripts/gates/ change, and on demand.
+# Runs right after each successful "Daily market monitor" build (scheduled 06:37 and
+# 09:37 HKT; GitHub can start those late). Also runs when this workflow or
+# scripts/gates/ change, and on demand.
 on:
-  schedule:
-    - cron: '7 2 * * 2-6'
+  workflow_run:
+    workflows: ["Daily market monitor"]
+    types: [completed]
   push:
     branches: [main]
     paths:
@@ -20,6 +21,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

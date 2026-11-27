@@ -13,7 +13,15 @@ Gate 1 — breadth: (52-week new highs - new lows) / breadth universe.
 Gate 4 — large vs small cap divergence: SPY close above its 200-day SMA while IWM
          close is below its 200-day SMA. Closed when that holds (mean-reversion
          setups only).
-Gate 2 (momentum curve) is not built yet: its parameters are not decided.
+Gate 2 — momentum curve: each session t, take the stocks with RS rating >= 98 as of
+         t-21 (RS score = 2 x 63-day return + 126-day + 189-day + 252-day return,
+         ranked as a percentile within that day's momentum universe; a public
+         approximation of the IBD RS rating, whose exact formula is not published).
+         Equal-weight return t-21 -> t, minus SPY's return over the same window.
+         Closed when that excess return is in the worst 5% of the last 756
+         sessions (~3 years).
+         Caveat: the stock list is today's listed stocks, so stocks delisted in
+         the past are missing from past portfolios (survivorship bias).
 Gate 3 (own positions) comes from the Trade Journal, not from here.
 
 Outputs (data/gates/):
@@ -38,6 +46,11 @@ LATEST_JSON = os.path.join(OUT_DIR, "latest.json")
 
 LOOKBACK_52W = 252
 G1_CUT = -2.0          # percent
+RS_MIN = 98            # RS rating cut-off (percentile, 1-99 scale)
+HOLD = 21              # sessions held (~1 month)
+PCT_WINDOW = 756       # sessions (~3 years) for the gate 2 percentile
+G2_CUT = 5.0           # percentile
+HISTORY_DAYS = 1650    # calendar days downloaded (RS 252 + hold 21 + window 756 + margin)
 SMA_LONG = 200
 MIN_PRICE = engine.MIN_PRICE
 MIN_VOL = engine.MIN_VOL
@@ -67,6 +80,39 @@ def gate1_breadth(close, vol, lookback=LOOKBACK_52W):
     out["g1_ratio_pct"] = 100 * (out["g1_new_high"] - out["g1_new_low"]) / out["g1_universe"].replace(0, np.nan)
     out = out[out["g1_universe"] > 0]
     out["g1_closed"] = out["g1_ratio_pct"] < G1_CUT
+    return out
+
+
+def rs_rating(close, vol):
+    """Percentile RS rating (0-100) within each day's momentum universe."""
+    close = close.sort_index()
+    vol = vol.reindex_like(close)
+    r = lambda n: close / close.shift(n) - 1  # noqa: E731
+    score = 2 * r(63) + r(126) + r(189) + r(252)
+    uni = (close.notna() & (close >= MIN_PRICE) & (vol >= MIN_VOL)
+           & (close * vol >= engine.MIN_DOLLAR_VOL) & score.notna())
+    score = score.where(uni)
+    return 100 * score.rank(axis=1, pct=True)
+
+
+def gate2_momentum(close, vol, spy, rs_min=RS_MIN, hold=HOLD, window=PCT_WINDOW):
+    close = close.sort_index()
+    rs = rs_rating(close, vol)
+    pick = rs >= rs_min                                  # chosen at t-hold
+    fwd = close / close.shift(hold) - 1                  # return t-hold -> t
+    chosen = pick.shift(hold, fill_value=False).astype(bool)
+    port = fwd.where(chosen).mean(axis=1)
+    n = (chosen & fwd.notna()).sum(axis=1)
+    spy = spy.reindex(close.index)
+    spy_ret = spy / spy.shift(hold) - 1
+    out = pd.DataFrame({"g2_n": n, "g2_port_ret_pct": 100 * port, "g2_spy_ret_pct": 100 * spy_ret})
+    out["g2_excess_pct"] = out["g2_port_ret_pct"] - out["g2_spy_ret_pct"]
+    out = out[(out["g2_n"] > 0) & out["g2_excess_pct"].notna()]
+    ex = out["g2_excess_pct"]
+    out["g2_pctile"] = ex.rolling(window, min_periods=window).apply(
+        lambda a: 100 * (a <= a[-1]).mean(), raw=True)
+    out["g2_closed"] = (out["g2_pctile"] <= G2_CUT).astype(object)
+    out.loc[out["g2_pctile"].isna(), "g2_closed"] = None
     return out
 
 
@@ -100,7 +146,7 @@ def clean(o):
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     started = datetime.now(timezone.utc)
-    start = (started - timedelta(days=760)).strftime("%Y-%m-%d")
+    start = (started - timedelta(days=HISTORY_DAYS)).strftime("%Y-%m-%d")
 
     uni, info = engine.build_universe()
     close, vol, failed = engine.download_bars(uni["ysym"].tolist(), start)
@@ -134,8 +180,10 @@ def main():
         px[sym].index = pd.to_datetime(px[sym].index)
     g4 = gate4_divergence(px["SPY"], px["IWM"])
     g4 = g4[g4.index <= close.index[-1]]
+    g2 = gate2_momentum(close, vol, px["SPY"])
 
-    h = g1.join(g4[["spy", "spy_sma200", "iwm", "iwm_sma200", "g4_closed"]], how="left")
+    h = g1.join(g2, how="left").join(g4[["spy", "spy_sma200", "iwm", "iwm_sma200", "g4_closed"]], how="left")
+    h = h[h.index >= h.index[-1] - pd.Timedelta(days=760)]   # keep ~2 years in the CSV
     h.index = pd.to_datetime(h.index).date
     h.index.name = "date"
     h.round(4).to_csv(HIST_CSV)
@@ -151,6 +199,12 @@ def main():
             "universe": last["g1_universe"],
             "closed_since": None,
         },
+        "gate2": {
+            "closed": None if pd.isna(last["g2_closed"]) else bool(last["g2_closed"]),
+            "excess_pct": last["g2_excess_pct"], "pctile": last["g2_pctile"],
+            "port_ret_pct": last["g2_port_ret_pct"], "spy_ret_pct": last["g2_spy_ret_pct"],
+            "n_stocks": last["g2_n"],
+        },
         "gate4": {
             "closed": None if pd.isna(last["g4_closed"]) else bool(last["g4_closed"]),
             "spy": last["spy"], "spy_sma200": last["spy_sma200"],
@@ -161,7 +215,9 @@ def main():
                      f"highest/lowest close of the last {LOOKBACK_52W} sessions (closing prices). Universe = close >= "
                      f"${MIN_PRICE:.0f}, volume >= {MIN_VOL:,} that day, with {LOOKBACK_52W} sessions of history.",
             "gate4": "SPY close > 200-day SMA and IWM close < 200-day SMA -> closed (mean-reversion setups only).",
-            "gate2": "not built: parameters not decided",
+            "gate2": f"stocks with RS rating >= {RS_MIN} at t-{HOLD} (RS score = 2 x 63d + 126d + 189d + 252d return, "
+                     f"percentile within the momentum universe), equal weight, return to t minus SPY; closed when in "
+                     f"the worst {G2_CUT:.0f}% of the last {PCT_WINDOW} sessions. Survivorship bias: today's stock list only.",
             "gate3": "from the Trade Journal, not this script",
         },
         "universe_info": info,
@@ -175,7 +231,8 @@ def main():
         latest["gate1"]["closed_since"] = str(run[run.astype(bool)].index[0])
     with open(LATEST_JSON, "w", encoding="utf-8") as f:
         json.dump(clean(latest), f, ensure_ascii=False, indent=1, allow_nan=False)
-    log(f"Done. Session {latest['session']}; gate1 {last['g1_ratio_pct']:.2f}%; gate4 {last['g4_closed']}")
+    log(f"Done. Session {latest['session']}; gate1 {last['g1_ratio_pct']:.2f}%; "
+        f"gate2 {last['g2_excess_pct']} pct {last['g2_pctile']}; gate4 {last['g4_closed']}")
 
 
 if __name__ == "__main__":
