@@ -455,7 +455,16 @@ def sec4b(ctx):
     else:
         rows = sb["rows"][:15]
         tr = "".join("<tr>" + "".join(f"<td>{R.esc(v)}</td>" for v in r) + "</tr>" for r in rows)
-    return ('<div class="sub-title" style="margin-top:20px">4B — Stockbee Market Monitor</div>'
+    first = (sb.get("coloured") or [[["", None, None]]])[0][0][0] if sb.get("coloured") else (sb["rows"][0][0] if sb.get("rows") else "")
+    stale = ""
+    try:
+        fd = pd.Timestamp(pd.to_datetime(first, format="%m/%d/%Y"))
+        if fd < pd.Timestamp(ctx.get("asof")):
+            stale = (f'<div class="mm-box" style="border-color:var(--amber)">Stockbee 未更新到 {R.ddmm(ctx.get("asof"))}：'
+                     f'佢個 sheet 最新一行係 {R.ddmm(fd)}（本站 {R.esc(str(ctx.get("fetched_utc","")))} UTC 讀取）。下一次自動 run 會再讀。</div>')
+    except Exception:  # noqa: BLE001
+        pass
+    return ('<div class="sub-title" style="margin-top:20px">4B — Stockbee Market Monitor</div>' + stale +
             '<div class="mm-wrap"><table class="mm-t" style="font-size:11px"><tr>' + "".join(f"<th>{h}</th>" for h in heads) + "</tr>"
             + tr + '</table></div>'
             f'<p class="mm-note">直接讀 Stockbee 公開 Google Sheet（<a href="{sb["src"]}" style="color:#888">連結</a>），最近 15 行。'
