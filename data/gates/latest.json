@@ -1,5 +1,5 @@
 {
- "run_utc": "2026-11-28 04:14",
+ "run_utc": "2026-11-28 09:29",
  "session": "2026-11-27",
  "gate1": {
   "closed": false,
@@ -37,15 +37,15 @@
  },
  "no_data_tickers": 0,
  "log": [
-  "[04:18:41Z] Bars: 4480 tickers x 1134 days; no data for 0",
-  "[04:14:50Z] NASDAQ screener rows: 7372",
-  "[04:14:50Z] NASDAQ Trader symbol directory rows: 13309",
-  "[04:14:50Z] Kept by screener name but flagged by symbol-directory name: 25 ARCC=Ares Capital Corporation Common Stock; BANX=ArrowMark Financial Corp. Common Stock; BCIC=BCP Investment Corporation Common Stock; CGBD=Carlyle Secured Lending Inc. Common Stock; CPZ=Calamos Long/Short Equity & Dynamic Income Trust Common Stock; CSQ=Calamos Strategic Total Return Common Stock; DXR=Daxor Corporation Common Stock; FCNCP=First Citizens BancShares Inc. Depositary Shares; FDUS=Fidus Investment Corporation Common Stock; FRMEP=First Merchants Corporation Depository Shares; FUND=Sprott Focus Trust Inc. Common Stock; GBDC=Golub Capital BDC Inc. Common Stock; GECC=Great Elm Capital Corp. Common Stock; GLAD=Gladstone Capital Corporation Common Stock; IEP=Icahn Enterprises L.P. Common Stock; MFIC=MidCap Financial Investment Corporation Common Stock; NSLR=Neostellar Capital Corp. Common Stock; OCSL=Oaktree Specialty Lending Corporation Common Stock; OFS=OFS Capital Corporation Common Stock; OXLC=Oxford Lane Capital Corp. Common Stock; RAND=Rand Capital Corporation Common Stock; SLRC=SLR Investment Corp. Common Stock; TBLD=Thornburg Income Builder Opportunities Trust Common Stock; TCPC=BlackRock TCP Capital Corp. Common Stock; WHF=WhiteHorse Finance Inc. Common Stock",
-  "[04:14:50Z] Candidate tickers after filters: 4480",
-  "[04:14:58Z] downloaded 200/4480",
-  "[04:15:51Z] downloaded 1200/4480",
-  "[04:16:42Z] downloaded 2200/4480",
-  "[04:17:33Z] downloaded 3200/4480",
-  "[04:18:24Z] downloaded 4200/4480"
+  "[09:33:32Z] Bars: 4480 tickers x 1134 days; no data for 0",
+  "[09:29:47Z] NASDAQ screener rows: 7372",
+  "[09:29:48Z] NASDAQ Trader symbol directory rows: 13309",
+  "[09:29:48Z] Kept by screener name but flagged by symbol-directory name: 25 ARCC=Ares Capital Corporation Common Stock; BANX=ArrowMark Financial Corp. Common Stock; BCIC=BCP Investment Corporation Common Stock; CGBD=Carlyle Secured Lending Inc. Common Stock; CPZ=Calamos Long/Short Equity & Dynamic Income Trust Common Stock; CSQ=Calamos Strategic Total Return Common Stock; DXR=Daxor Corporation Common Stock; FCNCP=First Citizens BancShares Inc. Depositary Shares; FDUS=Fidus Investment Corporation Common Stock; FRMEP=First Merchants Corporation Depository Shares; FUND=Sprott Focus Trust Inc. Common Stock; GBDC=Golub Capital BDC Inc. Common Stock; GECC=Great Elm Capital Corp. Common Stock; GLAD=Gladstone Capital Corporation Common Stock; IEP=Icahn Enterprises L.P. Common Stock; MFIC=MidCap Financial Investment Corporation Common Stock; NSLR=Neostellar Capital Corp. Common Stock; OCSL=Oaktree Specialty Lending Corporation Common Stock; OFS=OFS Capital Corporation Common Stock; OXLC=Oxford Lane Capital Corp. Common Stock; RAND=Rand Capital Corporation Common Stock; SLRC=SLR Investment Corp. Common Stock; TBLD=Thornburg Income Builder Opportunities Trust Common Stock; TCPC=BlackRock TCP Capital Corp. Common Stock; WHF=WhiteHorse Finance Inc. Common Stock",
+  "[09:29:48Z] Candidate tickers after filters: 4480",
+  "[09:29:56Z] downloaded 200/4480",
+  "[09:30:46Z] downloaded 1200/4480",
+  "[09:31:36Z] downloaded 2200/4480",
+  "[09:32:25Z] downloaded 3200/4480",
+  "[09:33:14Z] downloaded 4200/4480"
  ]
 }
